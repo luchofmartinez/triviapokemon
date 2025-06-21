@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:whoisthatpokemon/game_attempt.dart';
+import 'package:whoisthatpokemon/trivia_screen.dart';
 
 class HistoryScreen extends StatelessWidget {
   final int finalScore;
@@ -15,7 +16,6 @@ class HistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Separar intentos correctos e incorrectos para mejor visualización
     final List<GameAttempt> correctAttempts =
         gameHistory.where((attempt) => attempt.isCorrect).toList();
     final List<GameAttempt> incorrectAttempts =
@@ -29,8 +29,6 @@ class HistoryScreen extends StatelessWidget {
         ),
         backgroundColor: Colors.blue.shade700,
         centerTitle: true,
-        // Ocultar el botón de retroceso automático para forzar el botón "Volver a Jugar"
-        // O dejarlo si quieres que puedan simplemente volver con el botón de atrás del SO
         automaticallyImplyLeading: false,
       ),
       body: Container(
@@ -91,7 +89,6 @@ class HistoryScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        // Lista de respuestas correctas
                         ...correctAttempts.map((attempt) {
                           return Card(
                             margin: const EdgeInsets.symmetric(vertical: 5),
@@ -127,7 +124,6 @@ class HistoryScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        // Lista de respuestas incorrectas
                         ...incorrectAttempts.map((attempt) {
                           return Card(
                             margin: const EdgeInsets.symmetric(vertical: 5),
@@ -164,10 +160,11 @@ class HistoryScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
                   onPressed: () {
-                    // Volver a la pantalla de trivia (probablemente a través de pop hasta la ruta inicial)
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                    // O si main.dart solo tiene trivia_screen, simplemente Navigator.pop(context);
-                    // Pero popUntil es más robusto si añades más pantallas
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => const PokemonTriviaScreen(),
+                      ),
+                    );
                   },
                   icon: const Icon(Icons.refresh),
                   label: const Text(
