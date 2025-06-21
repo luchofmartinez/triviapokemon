@@ -135,7 +135,6 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
       _feedbackMessage = '';
       _guessController.clear();
       _isGameOver = false;
-      _isRevealed = false; // Reset reveal state for new Pokemon
     });
 
     final randomIndex = _random.nextInt(_allPokemon.length);
@@ -147,6 +146,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
+          _isRevealed = false;
           _currentPokemon = Pokemon.fromJson(data);
         });
       } else {
@@ -173,10 +173,6 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
       if (userGuess == correctName) {
         _score += 10;
         _feedbackMessage = '¡Correcto! Es ${_currentPokemon!.name}.';
-        _showFeedback(
-          '¡Correcto! Es ${_currentPokemon!.name}.',
-          isCorrect: true,
-        );
         _gameHistory.add(
           GameAttempt(
             pokemonName: _currentPokemon!.name,
@@ -188,10 +184,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
         _score = (_score - 5).clamp(0, double.infinity).toInt();
         _feedbackMessage =
             'Incorrecto. Era ${_currentPokemon!.name}. ¡Intenta de nuevo!';
-        _showFeedback(
-          'Incorrecto! Era ${_currentPokemon!.name}.',
-          isError: true,
-        );
+
         _gameHistory.add(
           GameAttempt(
             pokemonName: _currentPokemon!.name,
@@ -203,7 +196,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
       _pokemonGuessedCount++;
     });
 
-    Future.delayed(const Duration(seconds: 5), () {
+    Future.delayed(const Duration(seconds: 2), () {
       if (_pokemonGuessedCount >= _pokemonCount) {
         _isGameOver = true;
         _showGameOverDialog();
@@ -331,6 +324,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
                   ),
                 )
                 : Stack(
+                  fit: StackFit.expand,
                   // <-- ENVUELVE EL IMAGE.NETWORK EN UN STACK
                   children: [
                     ColorFiltered(
@@ -348,7 +342,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
                               ),
                       child: Image.network(
                         imageUrl,
-                        fit: BoxFit.contain, // O BoxFit.cover si prefieres
+                        fit: BoxFit.cover, // O BoxFit.cover si prefieres
                         errorBuilder: (context, error, stackTrace) {
                           return Center(
                             child: Icon(
