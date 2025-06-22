@@ -21,7 +21,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
   Pokemon? _currentPokemon;
   int _score = 0;
   int _attempts = 0;
-  final int _pokemonCount = 10;
+  final int _pokemonCount = 1;
   int _pokemonGuessedCount = 0;
   List<String> _answerOptions = [];
   final int _numberOfOptions = 4;
@@ -283,134 +283,123 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
     );
   }
 
-  Widget _buildPokemonImage() {
-    final imageUrl = _currentPokemon?.imageUrl;
+  Widget _buildPokemonImage(ThemeData theme) {
+    if (_currentPokemon == null) {
+      return Container(
+        width: 200,
+        height: 200,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceVariant,
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: const Text('Cargando Pokémon...'),
+      );
+    }
 
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.6,
-      height: MediaQuery.of(context).size.width * 0.6,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            spreadRadius: 3,
-            blurRadius: 7,
-            offset: const Offset(0, 5),
+    return Stack(
+      alignment: Alignment.bottomCenter,
+      children: [
+        Container(
+          width: 250,
+          height: 250,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                theme.colorScheme.primaryContainer,
+                theme.colorScheme.secondaryContainer,
+              ], // Degradado vibrante
+            ),
+            borderRadius: BorderRadius.circular(25), // Bordes más redondeados
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                spreadRadius: 4,
+                blurRadius: 10,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child:
-            imageUrl == null || imageUrl.isEmpty
-                ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.image_not_supported,
-                        size: 50,
-                        color: Colors.grey.shade600,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        _feedbackMessage.isNotEmpty
-                            ? _feedbackMessage
-                            : 'Cargando Pokémon...',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 16,
-                        ),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return ScaleTransition(scale: animation, child: child);
+            },
+            child:
+                _isRevealed
+                    ? Image.network(
+                      _currentPokemon!.imageUrl,
+                      key: ValueKey<String>(_currentPokemon!.imageUrl),
+                      fit: BoxFit.contain,
+                    )
+                    : Image.network(
+                      _currentPokemon!.imageUrl,
+                      key: ValueKey<String>(_currentPokemon!.imageUrl),
+                      color: Colors.black, // Silueta negra
+                      colorBlendMode: BlendMode.srcIn,
+                      fit: BoxFit.contain,
+                    ),
+          ),
+        ),
+        if (_isRevealed)
+          Positioned(
+            bottom: 10,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 1),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(
+                  parent: _feedbackAnimationController,
+                  curve: Curves.easeOut,
+                ),
+              ),
+              child: FadeTransition(
+                opacity: feedbackFadeAnimation, // USANDO LA VARIABLE EXISTENTE
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  margin: const EdgeInsets.symmetric(horizontal: 15),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondary.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(
+                      15,
+                    ), // Bordes más redondeados
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 5,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
-                )
-                : Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    ColorFiltered(
-                      colorFilter:
-                          _isRevealed
-                              ? const ColorFilter.mode(
-                                Colors.transparent,
-                                BlendMode.multiply,
-                              )
-                              : const ColorFilter.mode(
-                                Colors.black,
-                                BlendMode.srcATop,
-                              ),
-                      child: Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Center(
-                            child: Icon(
-                              Icons.error_outline,
-                              size: 50,
-                              color: Colors.red.shade400,
-                            ),
-                          );
-                        },
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value:
-                                  loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                      : null,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.red.shade400,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                  child: Text(
+                    _currentPokemon!.name.toUpperCase(),
+                    style: TextStyle(
+                      color: theme.colorScheme.onSecondary,
+
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
                     ),
-                    if (_isRevealed && _currentPokemon != null)
-                      Positioned(
-                        bottom: 10,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          margin: const EdgeInsets.symmetric(horizontal: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.6),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            _currentPokemon!.name.toUpperCase(),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
-      ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          '¿Quién es ese Pokémon?',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
+        title: const Text('¿Quién es ese Pokémon?'),
         backgroundColor: Colors.red.shade700,
         elevation: 0,
         centerTitle: true,
@@ -420,25 +409,26 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
               children: [
                 TextButton(
                   onPressed: _resetGame,
-                  style: TextButton.styleFrom(foregroundColor: Colors.white),
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.onPrimary,
+                  ),
                   child: const Text(
                     'Reiniciar',
                     style: TextStyle(color: Colors.white, fontSize: 16),
-                  ), // Color del texto
+                  ),
                 ),
-                const SizedBox(width: 8), // Espacio entre los botones
+                const SizedBox(width: 8),
                 TextButton(
                   onPressed: () {
-                    // Finalizar el juego y navegar a la pantalla de historial
                     _showGameOverDialog();
                   },
                   style: TextButton.styleFrom(foregroundColor: Colors.white),
                   child: const Text(
                     'Finalizar',
                     style: TextStyle(color: Colors.white, fontSize: 16),
-                  ), // Color del texto
+                  ),
                 ),
-                const SizedBox(width: 8), // Un poco de margen al final
+                const SizedBox(width: 8),
               ],
             ),
         ],
@@ -448,9 +438,12 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
         height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.blue.shade200, Colors.yellow.shade100],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              theme.scaffoldBackgroundColor,
+              theme.colorScheme.primary.withOpacity(0.2),
+            ],
           ),
         ),
         child: SingleChildScrollView(
@@ -465,7 +458,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     margin: const EdgeInsets.only(bottom: 20.0),
                     decoration: BoxDecoration(
-                      color: Colors.red.shade600,
+                      color: theme.colorScheme.primary,
                       borderRadius: BorderRadius.circular(15),
                       boxShadow: [
                         BoxShadow(
@@ -515,12 +508,16 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
                                   );
                                 })
                                 .toList(),
-                        dropdownColor: Colors.red.shade500,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
+                        dropdownColor: theme.cardColor,
+                        style: const TextStyle(color: Colors.black),
+                        icon: const Icon(
+                          Icons.arrow_drop_down,
+                          color: Colors.blueAccent,
                         ),
-                        iconEnabledColor: Colors.white,
+                        underline: Container(
+                          height: 2,
+                          color: Colors.blueAccent,
+                        ),
                       ),
                     ),
                   ),
@@ -535,21 +532,20 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
                         _attempts = 0;
                         _gameHistory.clear();
                       });
-
                       _loadNewPokemon();
                     },
-                    icon: const Icon(Icons.play_arrow),
+                    icon: const Icon(Icons.play_arrow, size: 28),
                     label: const Text(
-                      'Iniciar Juego',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      '¡Comenzar!',
+                      style: TextStyle(fontSize: 22),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade600,
                     ),
                   ),
                 const SizedBox(height: 25),
                 if (_hasGameStarted && _currentPokemon != null)
-                  _buildPokemonImage(),
+                  _buildPokemonImage(theme),
                 const SizedBox(height: 30),
                 if (_hasGameStarted && _currentPokemon != null)
                   Column(
@@ -563,11 +559,8 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
                                       ? null
                                       : () => _checkAnswer(option),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    Colors
-                                        .blue
-                                        .shade700, // Color de los botones
-                                foregroundColor: Colors.white,
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: theme.colorScheme.onPrimary,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 30,
                                   vertical: 15,

@@ -16,6 +16,10 @@ class HistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // MODIFICADO: Obtenemos el tema y verificamos si es modo oscuro
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     final List<GameAttempt> correctAttempts =
         gameHistory.where((attempt) => attempt.isCorrect).toList();
     final List<GameAttempt> incorrectAttempts =
@@ -36,7 +40,10 @@ class HistoryScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.blue.shade100, Colors.purple.shade100],
+            colors: [
+              theme.scaffoldBackgroundColor,
+              theme.colorScheme.primary.withOpacity(0.2),
+            ],
           ),
         ),
         child: SafeArea(
@@ -51,25 +58,25 @@ class HistoryScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(15),
                   ),
                   margin: const EdgeInsets.only(bottom: 20),
-                  color: Colors.white,
+                  color: theme.cardColor,
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
                         Text(
                           'Puntuación Final: $finalScore',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Colors.deepPurple,
+                            color: theme.colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 10),
                         Text(
                           'Total de preguntas: $totalAttempts',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
-                            color: Colors.grey,
+                            color: theme.textTheme.bodyMedium?.color,
                           ),
                         ),
                       ],
@@ -93,7 +100,7 @@ class HistoryScreen extends StatelessWidget {
                           return Card(
                             margin: const EdgeInsets.symmetric(vertical: 5),
                             elevation: 2,
-                            color: Colors.green.shade50,
+                            // color: Colors.green.shade50,
                             child: ListTile(
                               leading: const Icon(
                                 Icons.check_circle,
@@ -128,7 +135,7 @@ class HistoryScreen extends StatelessWidget {
                           return Card(
                             margin: const EdgeInsets.symmetric(vertical: 5),
                             elevation: 2,
-                            color: Colors.red.shade50,
+                            // color: Colors.red.shade50,
                             child: ListTile(
                               leading: const Icon(
                                 Icons.cancel,
@@ -138,6 +145,7 @@ class HistoryScreen extends StatelessWidget {
                                 attempt.pokemonName.toUpperCase(),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
+                                  color: Colors.red,
                                 ),
                               ),
                               subtitle: Text(
@@ -148,10 +156,10 @@ class HistoryScreen extends StatelessWidget {
                         }),
                       ],
                       if (correctAttempts.isEmpty && incorrectAttempts.isEmpty)
-                        const Center(
+                        Center(
                           child: Text(
                             'No hay historial para mostrar.',
-                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                            style: theme.textTheme.bodyMedium,
                           ),
                         ),
                     ],
@@ -172,8 +180,8 @@ class HistoryScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange.shade600,
-                    foregroundColor: Colors.white,
+                    backgroundColor: theme.colorScheme.secondary,
+                    foregroundColor: theme.colorScheme.onSecondary,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 30,
                       vertical: 15,
