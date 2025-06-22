@@ -21,7 +21,7 @@ class _PokemonTriviaScreenState extends State<PokemonTriviaScreen>
   Pokemon? _currentPokemon;
   int _score = 0;
   int _attempts = 0;
-  final int _pokemonCount = 1;
+  final int _pokemonCount = 5;
   int _pokemonGuessedCount = 0;
   List<String> _answerOptions = [];
   final int _numberOfOptions = 4;
