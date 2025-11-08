@@ -8,7 +8,7 @@ class AppTheme {
     useMaterial3: true,
     scaffoldBackgroundColor: Colors.grey[50],
     appBarTheme: AppBarTheme(
-      color: Colors.blue[800],
+      backgroundColor: Colors.blue[800],
       iconTheme: const IconThemeData(color: Colors.white),
       titleTextStyle: const TextStyle(
         color: Colors.white,
@@ -38,7 +38,7 @@ class AppTheme {
     useMaterial3: true,
     scaffoldBackgroundColor: Colors.grey[900],
     appBarTheme: AppBarTheme(
-      color: Colors.blue[900],
+      backgroundColor: Colors.blue[900],
       iconTheme: const IconThemeData(color: Colors.white),
       titleTextStyle: const TextStyle(
         color: Colors.white,
@@ -51,8 +51,7 @@ class AppTheme {
       onPrimary: Colors.black,
       secondary: Colors.amber[300]!,
       onSecondary: Colors.black,
-      background: Colors.grey[900]!,
-      surface: Colors.grey[800]!,
+      surface: Colors.grey[900]!,
     ),
     cardTheme: CardThemeData(color: Colors.grey[800], elevation: 2),
     floatingActionButtonTheme: FloatingActionButtonThemeData(

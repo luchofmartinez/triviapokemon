@@ -1,21 +1,73 @@
 import 'package:flutter/material.dart';
-import 'package:whoisthatpokemon/app_theme.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:dio/dio.dart'; // Asegúrate de importar Dio
+import 'package:whoisthatpokemon/cubit/pokemon_game_cubit.dart';
+import 'package:whoisthatpokemon/repository/pokemon_repository.dart';
 import 'package:whoisthatpokemon/trivia_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  // Puedes crear tu instancia de Dio aquí
+  final dio = Dio();
+
+  runApp(MyApp(dio: dio));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final Dio dio;
+  const MyApp({super.key, required this.dio});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Trivia Pokémon',
-      theme: AppTheme.darkTheme,
-      home: const PokemonTriviaScreen(),
+    // 1. Proveemos el Repositorio, que usa la instancia de Dio
+    return RepositoryProvider(
+      create: (context) => PokemonRepository(dio: dio),
+
+      // 2. Proveemos el Cubit, que a su vez usa el Repositorio
+      child: BlocProvider(
+        create:
+            (context) => PokemonGameCubit(
+              pokemonRepository: RepositoryProvider.of<PokemonRepository>(
+                context,
+              ),
+            ),
+        child: MaterialApp(
+          title: '¿Quién es ese Pokémon?',
+          debugShowCheckedModeBanner: false,
+
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
+            appBarTheme: AppBarTheme(
+              // Usará 'colorScheme.primary' (rojo) y 'colorScheme.onPrimary' (blanco)
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              elevation: 4.0,
+              centerTitle: true,
+              titleTextStyle: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white, // Asegura el color del texto
+              ),
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                // Usará 'colorScheme.primary'
+                backgroundColor: Colors.red.shade700,
+                // Usará 'colorScheme.onPrimary'
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 15,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+            ),
+            useMaterial3: true,
+          ),
+          home: const PokemonTriviaScreen(), // Tu pantalla
+        ),
+      ),
     );
   }
 }
