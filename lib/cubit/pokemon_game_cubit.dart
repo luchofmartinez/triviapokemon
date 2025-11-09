@@ -14,77 +14,71 @@ class PokemonGameCubit extends Cubit<PokemonGameState> {
   final int _numberOfOptions = 4;
 
   PokemonGameCubit({required PokemonRepository pokemonRepository})
-    : _pokemonRepository = pokemonRepository,
-      super(PokemonGameState.initial()) {
-    // No llames a 'loadInitialGeneration' aquí si la UI lo va a hacer
-    // con el context para el precaching.
-    // Si no usas precaching, puedes dejar: loadInitialGeneration();
+      : _pokemonRepository = pokemonRepository,
+        super(PokemonGameState.initial()) {
+    // --- CAMBIO 1: NO llamar a loadInitialGeneration() aquí ---
   }
 
   /// Carga la lista de Pokémon para la generación en el estado actual.
-  /// Esta función AHORA también limpia el estado del juego anterior.
   Future<void> loadInitialGeneration([BuildContext? context]) async {
-    emit(
-      state.copyWith(
-        status: GameStatus.loading,
-        allPokemon: [],
-        clearCurrentPokemon: true,
-        score: 0,
-        pokemonGuessedCount: 0,
-        gameHistory: [],
-        answerOptions: [],
-        clearSelectedAnswer: true,
+    // --- CAMBIO 2: Guardián por si no hay generación ---
+    if (state.selectedGeneration == null) {
+      emit(state.copyWith(
+          status: GameStatus.error,
+          errorMessage: 'Por favor, selecciona una generación.'));
+      return;
+    }
 
-        // --- CAMBIO AQUÍ ---
-        // Asegura que el 'max' se actualice al 'límite' de la generación seleccionada
-        maxPokemonInGeneration: state.selectedGeneration.limit,
-        // Resetea la longitud del juego si excede el nuevo máximo
-        selectedGameLength:
-            state.selectedGameLength > state.selectedGeneration.limit
-                ? 5 // Resetea a 5
-                : state.selectedGameLength,
-        // --- FIN DE CAMBIO ---
-      ),
-    );
+    emit(state.copyWith(
+      status: GameStatus.loading,
+      allPokemon: [],
+      clearCurrentPokemon: true,
+      score: 0,
+      pokemonGuessedCount: 0,
+      gameHistory: [],
+      answerOptions: [],
+      clearSelectedAnswer: true,
+      maxPokemonInGeneration: state.selectedGeneration!.limit, // '!' es seguro por el guardián
+      selectedGameLength:
+          state.selectedGameLength > state.selectedGeneration!.limit
+              ? 5
+              : state.selectedGameLength,
+    ));
 
     try {
-      final pokemonList = await _pokemonRepository.fetchPokemonList(
-        state.selectedGeneration,
-      );
+      final pokemonList =
+          await _pokemonRepository.fetchPokemonList(state.selectedGeneration!); // '!' es seguro
+          
+      emit(state.copyWith(
+        status: GameStatus.ready,
+        allPokemon: pokemonList,
+      ));
 
-      emit(state.copyWith(status: GameStatus.ready, allPokemon: pokemonList));
+      // ... (Tu lógica de precarga)
     } catch (e) {
-      emit(
-        state.copyWith(
-          status: GameStatus.error,
-          errorMessage: 'Error al cargar Pokémon. Revisa tu conexión.',
-        ),
-      );
+      emit(state.copyWith(
+        status: GameStatus.error,
+        errorMessage: 'Error al cargar Pokémon. Revisa tu conexión.',
+      ));
     }
   }
 
   /// Llamado cuando el usuario cambia la generación en el Dropdown.
-  Future<void> changeGeneration(
-    PokemonGeneration newGeneration, [
-    BuildContext? context,
-  ]) async {
-    // --- CAMBIO AQUÍ ---
-    // Resetea la longitud seleccionada si es mayor que el límite de la *nueva* generación
+  Future<void> changeGeneration(PokemonGeneration newGeneration,
+      [BuildContext? context]) async {
     int newGameLength = state.selectedGameLength;
     if (newGameLength > newGeneration.limit) {
-      newGameLength = 5; // O `newGeneration.limit`, pero 5 es un default seguro
+      newGameLength = 5;
     }
 
-    emit(
-      state.copyWith(
-        selectedGeneration: newGeneration,
-        selectedGameLength: newGameLength,
-        maxPokemonInGeneration:
-            newGeneration.limit, // Actualiza el max de inmediato
-      ),
-    );
-    // --- FIN DE CAMBIO ---
+    // --- CAMBIO 3: Usar el wrapper para setear la generación ---
+    emit(state.copyWith(
+      selectedGeneration: NullableWrapper(newGeneration),
+      selectedGameLength: newGameLength,
+      maxPokemonInGeneration: newGeneration.limit,
+    ));
 
+    // Ahora que la generación está seteada, cargamos los datos
     await loadInitialGeneration(context);
   }
 
@@ -153,10 +147,10 @@ class PokemonGameCubit extends Cubit<PokemonGameState> {
     // --- FIN DE CAMBIO ---
   }
 
-  /// Llamado cuando el usuario presiona "Reiniciar".
+/// Llamado cuando el usuario presiona "Reiniciar".
   void resetGame() {
-    // Ahora 'loadInitialGeneration' se encarga de TODO el reseteo.
-    loadInitialGeneration();
+    // --- CAMBIO 4: Resetea al estado inicial (con 'null') ---
+    emit(PokemonGameState.initial());
   }
 
   /// Llamado cuando el usuario presiona "Finalizar".

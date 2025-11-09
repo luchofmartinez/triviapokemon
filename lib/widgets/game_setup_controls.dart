@@ -1,3 +1,4 @@
+// lib/widgets/game_setup_controls.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:whoisthatpokemon/cubit/pokemon_game_cubit.dart';
@@ -9,13 +10,14 @@ class GameSetupControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Este widget SÓLO se reconstruye si cambia el status
-    final status = context.select((PokemonGameCubit cubit) => cubit.state.status);
-    final bool hasGameStarted = status != GameStatus.initial &&
+    final status = context.select(
+      (PokemonGameCubit cubit) => cubit.state.status,
+    );
+    final bool hasGameStarted =
+        status != GameStatus.initial &&
         status != GameStatus.loading &&
         status != GameStatus.ready;
 
-    // Si el juego ya empezó, no muestra nada
     if (hasGameStarted) {
       return const SizedBox.shrink();
     }
@@ -29,7 +31,7 @@ class GameSetupControls extends StatelessWidget {
     );
   }
 }
-
+ 
 // --- Widget privado para el Dropdown ---
 class _GenerationSelector extends StatelessWidget {
   const _GenerationSelector();
@@ -38,23 +40,35 @@ class _GenerationSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Este widget SÓLO se reconstruye si cambian estos dos valores
-    final generation = context.select((PokemonGameCubit cubit) => cubit.state.selectedGeneration);
-    final isLoading = context.select((PokemonGameCubit cubit) => cubit.state.status == GameStatus.loading);
+    // --- CAMBIO 1: 'generation' ahora es nulable ---
+    final generation = context.select(
+      (PokemonGameCubit cubit) => cubit.state.selectedGeneration,
+    );
+    final isLoading = context.select(
+      (PokemonGameCubit cubit) => cubit.state.status == GameStatus.loading,
+    );
 
     return DropdownMenu<PokemonGeneration>(
+      // --- CAMBIO 2: 'initialSelection' será 'null' al inicio ---
       initialSelection: generation,
-      onSelected: isLoading
-          ? null
-          : (PokemonGeneration? newValue) {
-              if (newValue != null) {
-                context
-                    .read<PokemonGameCubit>()
-                    .changeGeneration(newValue, context);
-              }
-            },
+
+      onSelected:
+          isLoading
+              ? null
+              : (PokemonGeneration? newValue) {
+                if (newValue != null) {
+                  context.read<PokemonGameCubit>().changeGeneration(
+                    newValue,
+                    context,
+                  );
+                }
+              },
+
       expandedInsets: EdgeInsets.zero,
-      label: const Text('Generación'),
+
+      // --- CAMBIO 3: El 'label' ahora actúa como 'hint' ---
+      label: const Text('Elige una Generación'),
+
       textStyle: theme.textTheme.titleMedium?.copyWith(
         color: theme.colorScheme.onSurface,
         fontWeight: FontWeight.w600,
@@ -75,19 +89,22 @@ class _GenerationSelector extends StatelessWidget {
           borderSide: BorderSide(color: theme.colorScheme.primary, width: 2.0),
         ),
       ),
-      dropdownMenuEntries: PokemonGeneration.generations
-          .map<DropdownMenuEntry<PokemonGeneration>>(
-              (PokemonGeneration value) {
-        return DropdownMenuEntry<PokemonGeneration>(
-          value: value,
-          label: value.name,
-          style: MenuItemButton.styleFrom(
-            textStyle: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-        );
-      }).toList(),
+      dropdownMenuEntries:
+          PokemonGeneration.generations
+              .map<DropdownMenuEntry<PokemonGeneration>>((
+                PokemonGeneration value,
+              ) {
+                return DropdownMenuEntry<PokemonGeneration>(
+                  value: value,
+                  label: value.name,
+                  style: MenuItemButton.styleFrom(
+                    textStyle: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                );
+              })
+              .toList(),
     );
   }
 }
@@ -101,12 +118,19 @@ class _GameLengthSelector extends StatelessWidget {
     final theme = Theme.of(context);
     final cubit = context.read<PokemonGameCubit>();
 
-    // Este widget SÓLO se reconstruye si cambian estos tres valores
+    // --- CAMBIO 4: Habilitar el contador solo si hay una generación ---
     final state = context.watch<PokemonGameCubit>().state;
     final gameLength = state.selectedGameLength;
     final maxGameLength = state.maxPokemonInGeneration;
-    final isEnabled = state.status == GameStatus.ready;
-
+    // Se puede cambiar si (está listo) O (está cargando pero ya tiene gen)
+    final bool isEnabled =
+        state.status == GameStatus.ready ||
+        (state.status == GameStatus.loading &&
+            state.selectedGeneration != null);
+    // Ocultar si no hay generación seleccionada
+    if (state.selectedGeneration == null) {
+      return const SizedBox.shrink();
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -119,8 +143,9 @@ class _GameLengthSelector extends StatelessWidget {
         children: [
           Text(
             'Número de Preguntas:',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(color: theme.colorScheme.onSurface),
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onSurface,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
@@ -131,9 +156,10 @@ class _GameLengthSelector extends StatelessWidget {
               IconButton.filledTonal(
                 icon: const Icon(Icons.remove),
                 iconSize: 28,
-                onPressed: (!isEnabled || gameLength <= 1)
-                    ? null
-                    : () => cubit.changeGameLength(gameLength - 1),
+                onPressed:
+                    (!isEnabled || gameLength <= 1)
+                        ? null
+                        : () => cubit.changeGameLength(gameLength - 1),
               ),
               Container(
                 width: 80,
@@ -149,9 +175,10 @@ class _GameLengthSelector extends StatelessWidget {
               IconButton.filled(
                 icon: const Icon(Icons.add),
                 iconSize: 28,
-                onPressed: (!isEnabled || gameLength >= maxGameLength)
-                    ? null
-                    : () => cubit.changeGameLength(gameLength + 1),
+                onPressed:
+                    (!isEnabled || gameLength >= maxGameLength)
+                        ? null
+                        : () => cubit.changeGameLength(gameLength + 1),
               ),
             ],
           ),

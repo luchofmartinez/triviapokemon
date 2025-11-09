@@ -8,26 +8,25 @@ enum GameStatus {
   initial,
   loading,
   ready,
-  inProgress,
-  roundOver,
   finished,
   error,
+  inProgress, // <-- Me di cuenta que faltaba este, lo agrego por si acaso
+  roundOver,  // <-- Me di cuenta que faltaba este, lo agrego por si acaso
 }
 
 class PokemonGameState extends Equatable {
   final GameStatus status;
-  final PokemonGeneration selectedGeneration;
+  
+  // --- CAMBIO 1: Hacer nulable ---
+  final PokemonGeneration? selectedGeneration;
+  
   final List<Pokemon> allPokemon;
   final Pokemon? currentPokemon;
   final List<String> answerOptions;
   final int score;
   final int pokemonGuessedCount;
-
-  // --- 1. CAMBIOS AQUÍ ---
-  final int selectedGameLength; // Renombrado de 'totalPokemonPerGame'
-  final int maxPokemonInGeneration; // Nuevo campo
-  // --- FIN DE CAMBIOS ---
-
+  final int selectedGameLength;
+  final int maxPokemonInGeneration;
   final List<GameAttempt> gameHistory;
   final String? selectedAnswer;
   final bool? isLastAnswerCorrect;
@@ -35,18 +34,17 @@ class PokemonGameState extends Equatable {
 
   const PokemonGameState({
     this.status = GameStatus.initial,
-    required this.selectedGeneration,
+    
+    // --- CAMBIO 2: Aceptar nulable ---
+    this.selectedGeneration,
+    
     this.allPokemon = const [],
     this.currentPokemon,
     this.answerOptions = const [],
     this.score = 0,
     this.pokemonGuessedCount = 0,
-
-    // --- 2. CAMBIOS AQUÍ ---
-    this.selectedGameLength = 5, // Renombrado y valor por defecto
-    required this.maxPokemonInGeneration, // Ahora es requerido
-
-    // --- FIN DE CAMBIOS ---
+    this.selectedGameLength = 5,
+    this.maxPokemonInGeneration = 0, // <-- Cambiado a 0 por defecto
     this.gameHistory = const [],
     this.selectedAnswer,
     this.isLastAnswerCorrect,
@@ -55,31 +53,31 @@ class PokemonGameState extends Equatable {
 
   /// Constructor para el estado inicial del juego.
   factory PokemonGameState.initial() {
-    final firstGen = PokemonGeneration.generations.first;
-    return PokemonGameState(
-      selectedGeneration: firstGen,
-      // --- 3. CAMBIOS AQUÍ ---
-      maxPokemonInGeneration:
-          firstGen.limit, // Inicializa con el límite de la Gen 1
-      selectedGameLength: 5, // Valor por defecto
-      // --- FIN DE CAMBIOS ---
+    // --- CAMBIO 3: No seleccionar ninguna generación ---
+    return const PokemonGameState(
+      status: GameStatus.initial,
+      selectedGeneration: null,
+      maxPokemonInGeneration: 0, // No hay max hasta que se elija
+      selectedGameLength: 5,
     );
   }
 
   PokemonGameState copyWith({
     GameStatus? status,
-    PokemonGeneration? selectedGeneration,
+    
+    // --- CAMBIO 4: Wrapper para permitir 'null' explícito ---
+    // Esto es un truco para poder setear 'null'
+    // Si pasamos 'PokemonGeneration? selectedGeneration', copyWith(selectedGeneration: null)
+    // sería ignorado por el '??'.
+    NullableWrapper<PokemonGeneration?>? selectedGeneration,
+    
     List<Pokemon>? allPokemon,
     Pokemon? currentPokemon,
     List<String>? answerOptions,
     int? score,
     int? pokemonGuessedCount,
-
-    // --- 4. CAMBIOS AQUÍ ---
     int? selectedGameLength,
     int? maxPokemonInGeneration,
-
-    // --- FIN DE CAMBIOS ---
     List<GameAttempt>? gameHistory,
     String? selectedAnswer,
     bool? isLastAnswerCorrect,
@@ -89,49 +87,52 @@ class PokemonGameState extends Equatable {
   }) {
     return PokemonGameState(
       status: status ?? this.status,
-      selectedGeneration: selectedGeneration ?? this.selectedGeneration,
+      
+      // --- CAMBIO 5: Lógica del wrapper ---
+      selectedGeneration: selectedGeneration != null
+          ? selectedGeneration.value
+          : this.selectedGeneration,
+          
       allPokemon: allPokemon ?? this.allPokemon,
-      currentPokemon:
-          clearCurrentPokemon ? null : (currentPokemon ?? this.currentPokemon),
+      currentPokemon: clearCurrentPokemon
+          ? null
+          : (currentPokemon ?? this.currentPokemon),
       answerOptions: answerOptions ?? this.answerOptions,
       score: score ?? this.score,
       pokemonGuessedCount: pokemonGuessedCount ?? this.pokemonGuessedCount,
-
-      // --- 5. CAMBIOS AQUÍ ---
       selectedGameLength: selectedGameLength ?? this.selectedGameLength,
       maxPokemonInGeneration:
           maxPokemonInGeneration ?? this.maxPokemonInGeneration,
-
-      // --- FIN DE CAMBIOS ---
       gameHistory: gameHistory ?? this.gameHistory,
       selectedAnswer:
           clearSelectedAnswer ? null : selectedAnswer ?? this.selectedAnswer,
-      isLastAnswerCorrect:
-          clearSelectedAnswer
-              ? null
-              : isLastAnswerCorrect ?? this.isLastAnswerCorrect,
+      isLastAnswerCorrect: clearSelectedAnswer
+          ? null
+          : isLastAnswerCorrect ?? this.isLastAnswerCorrect,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 
   @override
   List<Object?> get props => [
-    status,
-    selectedGeneration,
-    allPokemon,
-    currentPokemon,
-    answerOptions,
-    score,
-    pokemonGuessedCount,
+        status,
+        selectedGeneration, // <-- CAMBIO 6: Añadido a props
+        allPokemon,
+        currentPokemon,
+        answerOptions,
+        score,
+        pokemonGuessedCount,
+        selectedGameLength,
+        maxPokemonInGeneration,
+        gameHistory,
+        selectedAnswer,
+        isLastAnswerCorrect,
+        errorMessage,
+      ];
+}
 
-    // --- 6. CAMBIOS AQUÍ ---
-    selectedGameLength,
-    maxPokemonInGeneration,
-
-    // --- FIN DE CAMBIOS ---
-    gameHistory,
-    selectedAnswer,
-    isLastAnswerCorrect,
-    errorMessage,
-  ];
+// --- CAMBIO 7: Clase helper para el 'copyWith' nulable ---
+class NullableWrapper<T> {
+  final T value;
+  const NullableWrapper(this.value);
 }
