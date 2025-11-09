@@ -37,7 +37,6 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
             appBarTheme: AppBarTheme(
-              // Usará 'colorScheme.primary' (rojo) y 'colorScheme.onPrimary' (blanco)
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
               elevation: 4.0,
@@ -45,14 +44,12 @@ class MyApp extends StatelessWidget {
               titleTextStyle: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Colors.white, // Asegura el color del texto
+                color: Colors.white,
               ),
             ),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
-                // Usará 'colorScheme.primary'
                 backgroundColor: Colors.red.shade700,
-                // Usará 'colorScheme.onPrimary'
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 30,
@@ -65,7 +62,7 @@ class MyApp extends StatelessWidget {
             ),
             useMaterial3: true,
           ),
-          home: const PokemonTriviaScreen(), // Tu pantalla
+          home: const PokemonTriviaScreen(),
         ),
       ),
     );
